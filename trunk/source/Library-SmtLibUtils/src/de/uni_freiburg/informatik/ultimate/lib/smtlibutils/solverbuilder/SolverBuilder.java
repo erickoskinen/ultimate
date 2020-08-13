@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.WrapperScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusEnumerationScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.TerminationRequest;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.NonIncrementalScriptor;
@@ -137,7 +138,7 @@ public class SolverBuilder {
 	 */
 	public static SolverSettings constructSolverSettings() throws AssertionError {
 		return new SolverSettings(SolverMode.Internal_SMTInterpol, false, false, null, null, -1, null, false, false,
-				false, null, null, false, false, null, false, Collections.emptyMap());
+				false, null, null, false, false, null, false, Collections.emptyMap(), false);
 	}
 
 	/**
@@ -180,7 +181,11 @@ public class SolverBuilder {
 			final LogProxy loggerWrapper = new SmtInterpolLogProxyWrapper(solverLogger);
 			final TerminationRequest termRequest =
 					new SMTInterpolTerminationRequest(services.getProgressMonitorService());
-			script = new SMTInterpol(loggerWrapper, termRequest);
+			if (settings.useMinimalUnsatCoreEnumerationForSmtInterpol()) {
+				script = new MusEnumerationScript(new SMTInterpol(loggerWrapper, termRequest));
+			} else {
+				script = new SMTInterpol(loggerWrapper, termRequest);
+			}
 		}
 		if (settings.dumpSmtScriptToFile()) {
 			script = wrapScriptWithLoggingScript(services, script, solverLogger,
@@ -367,6 +372,8 @@ public class SolverBuilder {
 
 		private final Map<String, String> mAdditionalOptions;
 
+		private final boolean mUseMinimalUnsatCoreEnumerationForSmtInterpol;
+
 		private SolverSettings(final SolverMode solverMode, final boolean fakeNonIncrementalScript,
 				final boolean useExternalSolver, final String commandExternalSolver, final Logics solverLogic,
 				final long timeoutSmtInterpol, final ExternalInterpolator externalInterpolator,
@@ -374,7 +381,8 @@ public class SolverBuilder {
 				final boolean dumpMainTrackBenchmark, final String pathOfDumpedScript,
 				final String baseNameOfDumpedScript, final boolean useDiffWrapper, final boolean dumpFeatureVector,
 				final String featureVectorDumpPath, final boolean compressDumpedScript,
-				final Map<String, String> additionalOptions) {
+				final Map<String, String> additionalOptions,
+				final boolean useMinimalUnsatCoreEnumerationForSmtInterpol) {
 			mSolverMode = solverMode;
 			mFakeNonIncrementalScript = fakeNonIncrementalScript;
 			mUseExternalSolver = useExternalSolver;
@@ -392,6 +400,7 @@ public class SolverBuilder {
 			mFeatureVectorDumpPath = featureVectorDumpPath;
 			mCompressDumpedScript = compressDumpedScript;
 			mAdditionalOptions = additionalOptions;
+			mUseMinimalUnsatCoreEnumerationForSmtInterpol = useMinimalUnsatCoreEnumerationForSmtInterpol;
 
 		}
 
@@ -454,6 +463,10 @@ public class SolverBuilder {
 			return mUseDiffWrapper;
 		}
 
+		public boolean useMinimalUnsatCoreEnumerationForSmtInterpol() {
+			return mUseMinimalUnsatCoreEnumerationForSmtInterpol;
+		}
+
 		public boolean dumpFeatureExtractionVector() {
 			return mDumpFeatureVector;
 		}
@@ -483,7 +496,8 @@ public class SolverBuilder {
 			return new SolverSettings(mSolverMode, mFakeNonIncrementalScript, mUseExternalSolver,
 					mExternalSolverCommand, mSolverLogics, mTimeoutSmtInterpol, mExternalInterpolator, enabled,
 					mDumpUnsatCoreTrackBenchmark, mDumpMainTrackBenchmark, folderPathOfDumpedFile, basenameOfDumpedFile,
-					mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath, compressScript, mAdditionalOptions);
+					mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath, compressScript, mAdditionalOptions,
+					mUseMinimalUnsatCoreEnumerationForSmtInterpol);
 		}
 
 		public SolverSettings setDumpUnsatCoreTrackBenchmark(final boolean enable) {
@@ -492,7 +506,7 @@ public class SolverBuilder {
 					mExternalSolverCommand, mSolverLogics, mTimeoutSmtInterpol, mExternalInterpolator,
 					mDumpSmtScriptToFile, enable, mDumpMainTrackBenchmark, mPathOfDumpedScript, mBaseNameOfDumpedScript,
 					mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath, mCompressDumpedScript,
-					mAdditionalOptions);
+					mAdditionalOptions, mUseMinimalUnsatCoreEnumerationForSmtInterpol);
 		}
 
 		public SolverSettings setDumpMainTrackBenchmark(final boolean enable) {
@@ -501,7 +515,7 @@ public class SolverBuilder {
 					mExternalSolverCommand, mSolverLogics, mTimeoutSmtInterpol, mExternalInterpolator,
 					mDumpSmtScriptToFile, mDumpUnsatCoreTrackBenchmark, enable, mPathOfDumpedScript,
 					mBaseNameOfDumpedScript, mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath,
-					mCompressDumpedScript, mAdditionalOptions);
+					mCompressDumpedScript, mAdditionalOptions, mUseMinimalUnsatCoreEnumerationForSmtInterpol);
 		}
 
 		public SolverSettings setDumpFeatureVectors(final boolean enabled, final String dumpPath) {
@@ -509,7 +523,7 @@ public class SolverBuilder {
 					mExternalSolverCommand, mSolverLogics, mTimeoutSmtInterpol, mExternalInterpolator,
 					mDumpSmtScriptToFile, mDumpUnsatCoreTrackBenchmark, mDumpMainTrackBenchmark, mPathOfDumpedScript,
 					mBaseNameOfDumpedScript, mUseDiffWrapper, enabled, dumpPath, mCompressDumpedScript,
-					mAdditionalOptions);
+					mAdditionalOptions, mUseMinimalUnsatCoreEnumerationForSmtInterpol);
 		}
 
 		public SolverSettings setSmtInterpolTimeout(final long timeoutSmtInterpol) {
@@ -517,7 +531,7 @@ public class SolverBuilder {
 					mExternalSolverCommand, mSolverLogics, timeoutSmtInterpol, mExternalInterpolator,
 					mDumpSmtScriptToFile, mDumpUnsatCoreTrackBenchmark, mDumpMainTrackBenchmark, mPathOfDumpedScript,
 					mBaseNameOfDumpedScript, mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath,
-					mCompressDumpedScript, mAdditionalOptions);
+					mCompressDumpedScript, mAdditionalOptions, mUseMinimalUnsatCoreEnumerationForSmtInterpol);
 		}
 
 		public SolverSettings setUseExternalSolver(final boolean enable, final String externalSolverCommand,
@@ -526,14 +540,15 @@ public class SolverBuilder {
 					externalSolverLogics, mTimeoutSmtInterpol, mExternalInterpolator, mDumpSmtScriptToFile,
 					mDumpUnsatCoreTrackBenchmark, mDumpMainTrackBenchmark, mPathOfDumpedScript, mBaseNameOfDumpedScript,
 					mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath, mCompressDumpedScript,
-					mAdditionalOptions);
+					mAdditionalOptions, mUseMinimalUnsatCoreEnumerationForSmtInterpol);
 		}
 
 		public SolverSettings setUseFakeIncrementalScript(final boolean enable) {
 			return new SolverSettings(mSolverMode, enable, mUseExternalSolver, mExternalSolverCommand, mSolverLogics,
 					mTimeoutSmtInterpol, mExternalInterpolator, mDumpSmtScriptToFile, mDumpUnsatCoreTrackBenchmark,
 					mDumpMainTrackBenchmark, mPathOfDumpedScript, mBaseNameOfDumpedScript, mUseDiffWrapper,
-					mDumpFeatureVector, mFeatureVectorDumpPath, mCompressDumpedScript, mAdditionalOptions);
+					mDumpFeatureVector, mFeatureVectorDumpPath, mCompressDumpedScript, mAdditionalOptions,
+					mUseMinimalUnsatCoreEnumerationForSmtInterpol);
 		}
 
 		public SolverSettings setSolverLogics(final Logics logics) {
@@ -541,7 +556,15 @@ public class SolverBuilder {
 					mExternalSolverCommand, logics, mTimeoutSmtInterpol, mExternalInterpolator, mDumpSmtScriptToFile,
 					mDumpUnsatCoreTrackBenchmark, mDumpMainTrackBenchmark, mPathOfDumpedScript, mBaseNameOfDumpedScript,
 					mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath, mCompressDumpedScript,
-					mAdditionalOptions);
+					mAdditionalOptions, mUseMinimalUnsatCoreEnumerationForSmtInterpol);
+		}
+
+		public SolverSettings setUseMinimalUnsatCoreEnumerationForSmtInterpol(final boolean enable) {
+			return new SolverSettings(mSolverMode, mFakeNonIncrementalScript, mUseExternalSolver,
+					mExternalSolverCommand, mSolverLogics, mTimeoutSmtInterpol, mExternalInterpolator,
+					mDumpSmtScriptToFile, mDumpUnsatCoreTrackBenchmark, mDumpMainTrackBenchmark, mPathOfDumpedScript,
+					mBaseNameOfDumpedScript, mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath,
+					mCompressDumpedScript, mAdditionalOptions, enable);
 		}
 
 		/**
@@ -566,7 +589,8 @@ public class SolverBuilder {
 						mExternalSolverCommand, mSolverLogics, mTimeoutSmtInterpol, mExternalInterpolator,
 						mDumpSmtScriptToFile, mDumpUnsatCoreTrackBenchmark, mDumpMainTrackBenchmark,
 						mPathOfDumpedScript, mBaseNameOfDumpedScript, mUseDiffWrapper, mDumpFeatureVector,
-						mFeatureVectorDumpPath, mCompressDumpedScript, mAdditionalOptions);
+						mFeatureVectorDumpPath, mCompressDumpedScript, mAdditionalOptions,
+						mUseMinimalUnsatCoreEnumerationForSmtInterpol);
 			}
 
 			final boolean useExternalSolver;
@@ -621,7 +645,7 @@ public class SolverBuilder {
 					logics, timeoutSmtInterpol, externalInterpolator, mDumpSmtScriptToFile,
 					mDumpUnsatCoreTrackBenchmark, mDumpMainTrackBenchmark, mPathOfDumpedScript, mBaseNameOfDumpedScript,
 					useDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath, mCompressDumpedScript,
-					mAdditionalOptions);
+					mAdditionalOptions, mUseMinimalUnsatCoreEnumerationForSmtInterpol);
 		}
 
 		public SolverSettings setAdditionalOptions(final Map<String, String> additionalOptions) {
@@ -629,7 +653,8 @@ public class SolverBuilder {
 					mExternalSolverCommand, mSolverLogics, mTimeoutSmtInterpol, mExternalInterpolator,
 					mDumpSmtScriptToFile, mDumpUnsatCoreTrackBenchmark, mDumpMainTrackBenchmark, mPathOfDumpedScript,
 					mBaseNameOfDumpedScript, mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath,
-					mCompressDumpedScript, Objects.requireNonNull(additionalOptions));
+					mCompressDumpedScript, Objects.requireNonNull(additionalOptions),
+					mUseMinimalUnsatCoreEnumerationForSmtInterpol);
 		}
 
 		/**
