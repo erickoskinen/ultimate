@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 University of Freiburg
+ * Copyright (C) 2020 Leonard Fichtner
  *
  * This file is part of SMTInterpol.
  *
@@ -16,12 +16,16 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.uni_freiburg.informatik.ultimate.smtinterpol;
+package de.uni_freiburg.informatik.ultimate.smtinterpol.muses;
 
 /**
- * Automatically generated class to remember version.
- * @author Jochen Hoenicke
+ * Defines the additional options used by the MusEnumerationScript.
+ *
+ * @author LeonardFichtner
+ *
  */
-public interface Version {
-	public final static String VERSION = "2.5-789-gf71719c0";
+public interface MusOptions {
+
+	public String INTERPOLATION_HEURISTIC = ":interpolation-heuristic";
+	public String TOLERANCE = ":tolerance";
 }
