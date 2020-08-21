@@ -45,7 +45,7 @@
         </tasks>
         
         <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
-        <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5</option>
+        <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SMALLEST</option>
     </rundefinition>
 
@@ -60,7 +60,7 @@
         </tasks>
         
         <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
-        <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5</option>
+        <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=BIGGEST</option>
     </rundefinition>
 </benchmark>
