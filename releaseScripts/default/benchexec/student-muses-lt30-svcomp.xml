@@ -32,9 +32,24 @@
             <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
         </tasks>
         <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
     
-    <rundefinition name="MUSes SMALLEST">
+    <rundefinition name="MUSes FIRST">
+        <tasks name="lt300_32">
+            <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+            <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+        </tasks>
+        <tasks name="lt300_64">
+            <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+            <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+        </tasks>
+        <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+        <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=FIRST</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+    </rundefinition>
+    
+    <rundefinition name="MUSes SMALLEST 5s">
         <tasks name="lt300_32">
             <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
             <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
@@ -47,6 +62,23 @@
         <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SMALLEST</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+    </rundefinition>
+    
+    <rundefinition name="MUSes SMALLEST 1s">
+        <tasks name="lt300_32">
+            <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+            <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach32.set</includesfile>
+        </tasks>
+        <tasks name="lt300_64">
+            <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+            <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
+        </tasks>
+        
+        <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+        <option name="--traceabstraction.additional.smt.options">enumeration-timeout=1000</option>
+        <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SMALLEST</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
 
     <rundefinition name="MUSes BIGGEST">
@@ -62,6 +94,7 @@
         <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=BIGGEST</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
     
     <rundefinition name="MUSes LOWLEXORDER">
@@ -77,6 +110,7 @@
         <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=LOWLEXORDER</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
     
     <rundefinition name="MUSes HIGHLEXORDER">
@@ -92,6 +126,7 @@
         <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=HIGHLEXORDER</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
     
     <rundefinition name="MUSes SHALLOWEST">
@@ -107,6 +142,7 @@
         <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SHALLOWEST</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
     
         <rundefinition name="MUSes DEEPEST">
@@ -122,6 +158,7 @@
         <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=DEEPEST</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
     
     <rundefinition name="MUSes NARROWEST">
@@ -137,6 +174,7 @@
         <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=NARROWEST</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
     
     <rundefinition name="MUSes WIDEST">
@@ -152,6 +190,7 @@
         <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=WIDEST</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
     
     <rundefinition name="MUSes WIDESTAMONGSMALL 2">
@@ -168,6 +207,7 @@
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=WIDESTAMONGSMALL</option>
         <option name="--traceabstraction.additional.smt.options">tolerance=0.2</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
     
     <rundefinition name="MUSes WIDESTAMONGSMALL 4">
@@ -184,6 +224,7 @@
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=WIDESTAMONGSMALL</option>
         <option name="--traceabstraction.additional.smt.options">tolerance=0.4</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
     
     <rundefinition name="MUSes WIDESTAMONGSMALL 6">
@@ -200,6 +241,7 @@
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=WIDESTAMONGSMALL</option>
         <option name="--traceabstraction.additional.smt.options">tolerance=0.6</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
     
     <rundefinition name="MUSes WIDESTAMONGSMALL 8">
@@ -216,6 +258,7 @@
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=WIDESTAMONGSMALL</option>
         <option name="--traceabstraction.additional.smt.options">tolerance=0.8</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
     
     <rundefinition name="MUSes WIDESTAMONGSMALL 10">
@@ -232,6 +275,7 @@
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=WIDESTAMONGSMALL</option>
         <option name="--traceabstraction.additional.smt.options">tolerance=1.0</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
 
     <rundefinition name="MUSes SMALLESTAMONGWIDE 1">
@@ -248,6 +292,7 @@
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SMALLESTAMONGWIDE</option>
         <option name="--traceabstraction.additional.smt.options">tolerance=0.1</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
     
     <rundefinition name="MUSes SMALLESTAMONGWIDE 2">
@@ -264,6 +309,7 @@
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SMALLESTAMONGWIDE</option>
         <option name="--traceabstraction.additional.smt.options">tolerance=0.2</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
     
     <rundefinition name="MUSes SMALLESTAMONGWIDE 3">
@@ -280,6 +326,7 @@
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SMALLESTAMONGWIDE</option>
         <option name="--traceabstraction.additional.smt.options">tolerance=0.3</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
     
     <rundefinition name="MUSes SMALLESTAMONGWIDE 4">
@@ -296,6 +343,7 @@
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SMALLESTAMONGWIDE</option>
         <option name="--traceabstraction.additional.smt.options">tolerance=0.4</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
     
     <rundefinition name="MUSes SMALLESTAMONGWIDE 5">
@@ -312,6 +360,7 @@
         <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
         <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SMALLESTAMONGWIDE</option>
         <option name="--traceabstraction.additional.smt.options">tolerance=0.5</option>
+        <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
     </rundefinition>
 
 </benchmark>
