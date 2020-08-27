@@ -105,6 +105,13 @@ public class MusEnumerationScript extends WrapperScript {
 	Random mRandom;
 
 	/**
+	 * Default constructor.
+	 */
+	public MusEnumerationScript() {
+		this(new SMTInterpol());
+	}
+
+	/**
 	 * Takes the LogProxy of the given SMTInterpol for logging.
 	 */
 	public MusEnumerationScript(final SMTInterpol wrappedScript) {
@@ -158,6 +165,12 @@ public class MusEnumerationScript extends WrapperScript {
 	}
 
 	@Override
+	public Term[] getInterpolants(final Term[] partition) {
+		final int[] startOfSubtrees = new int[partition.length];
+		return getInterpolants(partition, startOfSubtrees);
+	}
+
+	@Override
 	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree) {
 		return mScript.getInterpolants(partition, startOfSubtree, proofTree);
 	}
@@ -170,6 +183,8 @@ public class MusEnumerationScript extends WrapperScript {
 	 * the muses found so far. If the timeout for the heuristic is exceeded, it returns the best mus found so far wrt.
 	 * the heuristic. If the timeout for generating the interpolant is exceeded, or the timeout for the enumeration is
 	 * exceeded, before any MUSes could be produced, an SMTLIBException is thrown.
+	 *
+	 * DEFAULT: Per Default, the HeuristicsType is set to RANDOM, the tolerance to 0.9 and the Timeout is unlimited.
 	 *
 	 * OPTIONS: To set the used heuristic, use {@link #setOption(String, Object)} with the
 	 * {@link MusOptions#INTERPOLATION_HEURISTIC} key and the respective {@link HeuristicsType} value. If you choose
@@ -246,6 +261,8 @@ public class MusEnumerationScript extends WrapperScript {
 	 * is returned. If ReMUS could not find any MUS in the given time, an arbitrary unsat core (i.e., the unsat core of
 	 * the wrapped script) is returned, which is not necessarily minimal wrt. satisfiability. Every step (enumeration,
 	 * heuristic, getUnsatCore of the wrapped script) has its own timeout.
+	 *
+	 * DEFAULT: Per Default, the HeuristicsType is set to RANDOM, the tolerance to 0.9 and the Timeout is unlimited.
 	 *
 	 * OPTIONS: To set the used heuristic, use {@link #setOption(String, Object)} with the
 	 * {@link MusOptions#INTERPOLATION_HEURISTIC} key and the respective {@link HeuristicsType} value. If you choose
