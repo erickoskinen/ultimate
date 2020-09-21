@@ -23,6 +23,7 @@ import java.util.BitSet;
 import java.util.Random;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
@@ -51,8 +52,8 @@ public class UnexploredMap {
 	}
 
 	/**
-	 * Randomly mess with the activity of Atoms, such that the Engine does not prefer atoms that have been active/inactive
-	 * so far.
+	 * Randomly mess with the activity of Atoms, such that the Engine does not prefer atoms that have been
+	 * active/inactive so far.
 	 */
 	public void messWithActivityOfAtoms(final Random rnd) {
 		mEngine.messWithActivityOfAtoms(rnd);
@@ -134,12 +135,11 @@ public class UnexploredMap {
 				return false;
 			} else {
 				mMaximalUnexploredSubset = collectAtomsWithCriteria(workingSet, this::isSetToTrue);
-				if (mMaximalUnexploredSubset.get(0) && mMaximalUnexploredSubset.get(1)
-						&& mMaximalUnexploredSubset.get(2) && mMaximalUnexploredSubset.get(4)) {
-				}
-				assert //!Config.EXPENSIVE_ASSERTS
-						 mMaximalUnexploredSubsetIsMSS() : "The models that are returned are no MSSes. Probably mLastStatus of the atoms has been corrupted.";
-				mImpliedCrits = collectAtomsWithCriteria(workingSet, this::isImpliedToTrue);
+				// The implied crits must be contained in the Maximal unexplored subset
+				// therefore, it is enough to look whether the constraint has been decided in level 0
+				mImpliedCrits = collectAtomsWithCriteria(mMaximalUnexploredSubset, this::isDecidedInLevelZero);
+				assert !Config.EXPENSIVE_ASSERTS
+				|| mMaximalUnexploredSubsetIsMSS() : "The models that are returned are no MSSes. Probably mLastStatus of the atoms has been corrupted.";
 				mEngine.pop(1);
 				return true;
 			}
@@ -170,8 +170,8 @@ public class UnexploredMap {
 		return mTranslator.translate2Atom(atomNumber).getDecideStatus().getSign() == 1;
 	}
 
-	private boolean isImpliedToTrue(final int atomNumber) {
-		return isSetToTrue(atomNumber) && mTranslator.translate2Atom(atomNumber).getDecideLevel() == 0;
+	private boolean isDecidedInLevelZero(final int atomNumber) {
+		return mTranslator.translate2Atom(atomNumber).getDecideLevel() == 0;
 	}
 
 	private boolean mMaximalUnexploredSubsetIsMSS() {

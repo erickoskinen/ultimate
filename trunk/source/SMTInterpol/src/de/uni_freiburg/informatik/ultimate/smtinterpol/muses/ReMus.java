@@ -26,6 +26,8 @@ import java.util.Random;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SExpression;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.TimeoutHandler;
 
 /**
@@ -42,14 +44,15 @@ public class ReMus implements Iterator<MusContainer> {
 	TimeoutHandler mTimeoutHandler;
 	long mTimeout;
 	Random mRnd;
+	boolean mUnknownAllowed;
+	LogProxy mLogger;
 
 	ArrayList<MusContainer> mMuses;
 	MusContainer mNextMus;
 	boolean mProvisionalSat;
 	BitSet mMaxUnexplored;
 	ArrayList<Integer> mMcs;
-	BitSet mPreviousCrits;
-	BitSet mNewImpliedCrits;
+	BitSet mKnownCrits;
 	BitSet mWorkingSet;
 	ReMus mSubordinateRemus;
 	boolean mMembersUpToDate;
@@ -69,15 +72,27 @@ public class ReMus implements Iterator<MusContainer> {
 	 * it can not continue the enumeration anymore. Note that the SMTSolver and the DPLLEngine of solver and map can
 	 * have separate timeouts/TerminationRequests, which can affect remus (and they should therefore be set
 	 * accordingly).
+	 *
+	 *
+	 * Setting the unknownAllowed flag to true allows the LBool.UNKNOWN value to occur in the enumeration process. Then,
+	 * when LBool.UNKNOWN is returned for a set of constraints, the set is marked as satisfiable and no further action
+	 * is taken on it, hence not all MUSes might be found anymore. Also, the returned MUSes could be non-minimal wrt.
+	 * satisfiability (because UNKNOWN might also occur in the internal shrinking process).
+	 *
+	 * Giving a LogProxy makes ReMus log information on the Logger of the solver. Giving null means, that ReMus won't
+	 * log.
 	 */
 	public ReMus(final ConstraintAdministrationSolver solver, final UnexploredMap map, final BitSet workingSet,
-			final TimeoutHandler handler, final long timeout, final Random rnd) {
+			final TimeoutHandler handler, final long timeout, final Random rnd, final boolean unknownAllowed,
+			final LogProxy logger) {
 		mSolver = solver;
 		mMap = map;
 		mTimeoutHandler = handler;
 		mTimeout = timeout;
 		mTimeoutOrTerminationRequestOccurred = false;
 		mRnd = rnd;
+		mUnknownAllowed = unknownAllowed;
+		mLogger = logger;
 
 		if (workingSet.length() > mSolver.getNumberOfConstraints()) {
 			throw new SMTLIBException(
@@ -92,41 +107,51 @@ public class ReMus implements Iterator<MusContainer> {
 	 * Constructor for internal instances, that are created for recursion.
 	 */
 	private ReMus(final ConstraintAdministrationSolver solver, final UnexploredMap map, final BitSet workingSet,
-			final TimeoutHandler handler, final Random rnd) {
-		this(solver, map, workingSet, handler, 0, rnd);
+			final TimeoutHandler handler, final Random rnd, final boolean unknownAllowed, final LogProxy logger) {
+		this(solver, map, workingSet, handler, 0, rnd, unknownAllowed, logger);
 	}
 
 	private void initializeMembersAndAssertImpliedCrits() {
 		mMuses = new ArrayList<>();
 		mSolver.clearUnknownConstraints();
-		mPreviousCrits = mSolver.getCrits();
+		mKnownCrits = mSolver.getCrits();
 		mMap.messWithActivityOfAtoms(mRnd);
 		mMaxUnexplored = mMap.findMaximalUnexploredSubsetOf(mWorkingSet);
-		mNewImpliedCrits = mMap.findImpliedCritsOf(mWorkingSet);
-		mNewImpliedCrits.andNot(mPreviousCrits);
-		// If maxUnexplored does not contain some of the known crits, it must be satisfiable
-		mProvisionalSat = !MusUtils.contains(mMaxUnexplored, mPreviousCrits);
+		final BitSet newImpliedCrits = mMap.findImpliedCritsOf(mWorkingSet);
+		mSolver.assertCriticalConstraints(newImpliedCrits);
+		/*
+		 * This provisional test is not ment for speed-up (it might nonetheless provide some, since it could result in
+		 * one less checkSat call), but to dodge a certain case. It could be, that maxUnexplored does not contain one of
+		 * the already known (and hence, asserted) crits. Because of the (usually very handy) structure of the solver,
+		 * one would have to make a huge hassle to remove this one crit from the solver to get a correct checkSat and
+		 * then one would have to restore the previous structure of the solver again. But if maxUnexplored does not
+		 * contain some of the known crits, it must be satisfiable already, so one can just leave out this hassle and
+		 * check for set containment.
+		 */
+		mProvisionalSat = !MusUtils.contains(mMaxUnexplored, mKnownCrits);
+		mKnownCrits.or(newImpliedCrits);
 		mMembersUpToDate = true;
 	}
 
 	/**
 	 * This method might be costly, since it might have to search for a new mus first, before it knows whether another
-	 * mus exists or not. Also returns false, if a timeout or a request for termination occurred.
+	 * mus exists or not. This returns false, if a timeout or a request for termination occurred, except when a Mus has
+	 * been found before (by calling hasNext()) and has not been "consumed" by next().
 	 */
 	@Override
 	public boolean hasNext() throws SMTLIBException {
-		boolean thisMethodHasSetTheTimeout = false;
+		if (mNextMus != null) {
+			return true;
+		}
+
 		if (mTimeoutOrTerminationRequestOccurred) {
 			return false;
 		}
 
+		boolean thisMethodHasSetTheTimeout = false;
 		if (mTimeout > 0 && !mTimeoutHandler.timeoutIsSet()) {
 			mTimeoutHandler.setTimeout(mTimeout);
 			thisMethodHasSetTheTimeout = true;
-		}
-
-		if (mNextMus != null) {
-			return true;
 		}
 
 		if (mSubordinateRemus != null && mSubordinateRemus.hasNext()) {
@@ -177,7 +202,7 @@ public class ReMus implements Iterator<MusContainer> {
 			}
 			mSatisfiableCaseLoopNextWorkingSet.clear(critical);
 		}
-		mSatisfiableCaseLoopIsRunning = !mMcs.isEmpty() ? true : false;
+		mSatisfiableCaseLoopIsRunning = !mMcs.isEmpty() && !mTimeoutHandler.isTerminationRequested() ? true : false;
 	}
 
 	/**
@@ -189,22 +214,19 @@ public class ReMus implements Iterator<MusContainer> {
 	 * loop.
 	 */
 	private void searchForNextMusBeginningInThisRecursionLevel() {
-		if (mSubordinateRemus != null) {
-			throw new SMTLIBException("Let the subordinate find it's muses first.");
-		}
-		if (mSatisfiableCaseLoopIsRunning) {
-			throw new SMTLIBException("Finish the Satisfiable case loop first.");
-		}
+		assert mSubordinateRemus == null : "Let the subordinate find its muses first.";
+		assert !mSatisfiableCaseLoopIsRunning : "Finish the Satisfiable case loop first.";
 
 		if (!mMembersUpToDate) {
 			updateMembersAndAssertImpliedCrits();
 		}
 		while (!mMaxUnexplored.isEmpty() && mNextMus == null && !mTimeoutHandler.isTerminationRequested()) {
-			assert mMembersUpToDate && mSubordinateRemus == null : "System variables of ReMus are corrupted.";
+			assert mMembersUpToDate && mSubordinateRemus == null : "Variables of ReMus are corrupted.";
 			if (mProvisionalSat) {
 				handleUnexploredIsSat();
 			} else {
 				final BitSet unknowns = (BitSet) mMaxUnexplored.clone();
+				unknowns.andNot(mKnownCrits);
 				mSolver.assertUnknownConstraints(unknowns);
 				final LBool sat = mSolver.checkSat();
 				mSolver.clearUnknownConstraints();
@@ -216,11 +238,16 @@ public class ReMus implements Iterator<MusContainer> {
 					if (mTimeoutHandler.isTerminationRequested()) {
 						return;
 					}
-					throw new SMTLIBException("CheckSat returns UNKNOWN in Mus enumeration process.");
+					if (!mUnknownAllowed) {
+						throw new SMTLIBException("LBool.UNKNOWN occured in enumeration process, "
+								+ "despite of not being explicitly allowed. (To allow it, use allowCheckSatUnknown).");
+					}
+					// In case of unknown, only mark this set as satisfiable
+					mMap.BlockDown(mMaxUnexplored);
 				}
 			}
 			// Don't updateMembers while another ReMus is in work, since in the update also crits are asserted
-			// which will be removed (because of popRecLevel) after the other Remus is finished.
+			// which will be removed (because of popRecLevel) after the SubordinateRemus is finished.
 			if (mSubordinateRemus == null && !mTimeoutHandler.isTerminationRequested()) {
 				updateMembersAndAssertImpliedCrits();
 			} else {
@@ -230,21 +257,29 @@ public class ReMus implements Iterator<MusContainer> {
 	}
 
 	private void updateMembersAndAssertImpliedCrits() {
-		mNewImpliedCrits.or(mPreviousCrits);
-		mPreviousCrits = mNewImpliedCrits;
 		mMap.messWithActivityOfAtoms(mRnd);
 		mMaxUnexplored = mMap.findMaximalUnexploredSubsetOf(mWorkingSet);
-		mNewImpliedCrits = mMap.findImpliedCritsOf(mWorkingSet);
-		mNewImpliedCrits.andNot(mPreviousCrits);
-		mSolver.assertCriticalConstraints(mNewImpliedCrits);
-		// If maxUnexplored does not contain some of the known crits, it must be satisfiable
-		mProvisionalSat = !MusUtils.contains(mMaxUnexplored, mPreviousCrits);
+		final BitSet newImpliedCrits = mMap.findImpliedCritsOf(mWorkingSet);
+		newImpliedCrits.andNot(mKnownCrits);
+		mSolver.assertCriticalConstraints(newImpliedCrits);
+		/*
+		 * This provisional test is not ment for speed-up (it might nonetheless provide some, since it could result in
+		 * one less checkSat call), but to dodge a certain case. It could be, that maxUnexplored does not contain one of
+		 * the already known (and hence, asserted) crits. Because of the (usually very handy) structure of the solver,
+		 * one would have to make a huge hassle to remove this one crit from the solver to get a correct checkSat and
+		 * then one would have to restore the previous structure of the solver again. But if maxUnexplored does not
+		 * contain some of the known crits, it must be satisfiable already, so one can just leave out this hassle and
+		 * check for set containment.
+		 */
+		mProvisionalSat = !MusUtils.contains(mMaxUnexplored, mKnownCrits);
+		mKnownCrits.or(newImpliedCrits);
 		mMembersUpToDate = true;
 	}
 
 	private void handleUnexploredIsSat() {
 		// To get an extension here is useless, since maxUnexplored is a MSS already. Also BlockUp is useless, since we
-		// will block those sets anyways in the following recursion or have already blocked those sets
+		// will block the unsatisfiable supersets (mMaxUnexplored \cup \{crit\}) anyways in the following recursion or
+		// have already blocked those sets
 		mMap.BlockDown(mMaxUnexplored);
 		final BitSet bitSetMcs = (BitSet) mWorkingSet.clone();
 		bitSetMcs.andNot(mMaxUnexplored);
@@ -267,13 +302,17 @@ public class ReMus implements Iterator<MusContainer> {
 				nextWorkingSet.clear(critical);
 				mSatisfiableCaseLoopNextWorkingSet = nextWorkingSet;
 			}
-			mSatisfiableCaseLoopIsRunning = !mMcs.isEmpty() ? true : false;
+			mSatisfiableCaseLoopIsRunning = !mMcs.isEmpty() && !mTimeoutHandler.isTerminationRequested() ? true : false;
 		}
 	}
 
 	private void handleUnexploredIsUnsat() {
 		mSolver.pushRecLevel();
-		mNextMus = Shrinking.shrink(mSolver, mMaxUnexplored, mMap, mTimeoutHandler, mRnd);
+
+		if (mLogger != null) {
+			mLogger.fatal("Now shrinking...");
+		}
+		mNextMus = Shrinking.shrink(mSolver, mMaxUnexplored, mMap, mTimeoutHandler, mRnd, mUnknownAllowed);
 		mSolver.popRecLevel();
 		if (mNextMus == null) {
 			return;
@@ -293,7 +332,7 @@ public class ReMus implements Iterator<MusContainer> {
 
 	private void createNewSubordinateRemus(final BitSet nextWorkingSet) {
 		mSolver.pushRecLevel();
-		mSubordinateRemus = new ReMus(mSolver, mMap, nextWorkingSet, mTimeoutHandler, mRnd);
+		mSubordinateRemus = new ReMus(mSolver, mMap, nextWorkingSet, mTimeoutHandler, mRnd, mUnknownAllowed, mLogger);
 	}
 
 	/**
@@ -303,7 +342,7 @@ public class ReMus implements Iterator<MusContainer> {
 	private void createNewSubordinateRemusWithExtraCrit(final BitSet nextWorkingSet, final int crit) {
 		mSolver.pushRecLevel();
 		mSolver.assertCriticalConstraint(crit);
-		mSubordinateRemus = new ReMus(mSolver, mMap, nextWorkingSet, mTimeoutHandler, mRnd);
+		mSubordinateRemus = new ReMus(mSolver, mMap, nextWorkingSet, mTimeoutHandler, mRnd, mUnknownAllowed, mLogger);
 	}
 
 	private void removeSubordinateRemus() {
@@ -340,6 +379,11 @@ public class ReMus implements Iterator<MusContainer> {
 		}
 		if (thisMethodHasSetTheTimeout) {
 			mTimeoutHandler.clearTimeout();
+		}
+		if (mLogger != null && restOfMuses.size() == 0) {
+			final Object info = mSolver.getInfo(":all-statistics");
+			final SExpression infoToString = new SExpression(info);
+			mLogger.fatal(infoToString.toString());
 		}
 		return restOfMuses;
 	}
