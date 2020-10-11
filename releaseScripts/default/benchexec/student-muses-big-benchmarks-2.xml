@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
+<benchmark tool="ultimateautomizer" timelimit="300s" hardtimelimit="300s" memlimit="8GB" cpuCores="2">
+  <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  <option name="--force-no-wrapper"/>
+  <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+  <option name="--traceabstraction.trace.refinement.strategy">FIXED_PREFERENCES</option>
+  <option name="--traceabstraction.compute.interpolants.along.a.counterexample">Craig_NestedInterpolation</option>
+  <option name="--traceabstraction.smt.solver">Internal_SMTInterpol</option>
+  <option name="--traceabstraction.compute.trace.for.counterexample.result">false</option>
+  <option name="--rcfgbuilder.size.of.a.code.block">SequenceOfStatements</option>
+  
+  <rundefinition name="MUSes BIGGEST">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_all_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_all_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+	<option name="--traceabstraction.additional.smt.options">produce-unsat-cores=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=BIGGEST</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+	<option name="--traceabstraction.additional.smt.options">unknown-allowed=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes NARROWEST">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_all_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_all_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+	<option name="--traceabstraction.additional.smt.options">produce-unsat-cores=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=NARROWEST</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+	<option name="--traceabstraction.additional.smt.options">unknown-allowed=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes WIDESTAMONGSMALL 4">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_all_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_all_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+	<option name="--traceabstraction.additional.smt.options">produce-unsat-cores=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=WIDESTAMONGSMALL</option>
+    <option name="--traceabstraction.additional.smt.options">tolerance=0.4</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+	<option name="--traceabstraction.additional.smt.options">unknown-allowed=true</option>
+  </rundefinition>
+  <rundefinition name="MUSes SMALLESTAMONGWIDE 2">
+    <tasks name="lt300_32">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_all_reach32.set</includesfile>
+    </tasks>
+    <tasks name="lt300_64">
+      <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+      <includesfile>../../../trunk/examples/svcomp/heuristic_all_reach64.set</includesfile>
+    </tasks>
+    <option name="--traceabstraction.use.minimal.unsat.core.enumeration">true</option>
+    <option name="--traceabstraction.additional.smt.options">produce-proofs=true</option>
+	<option name="--traceabstraction.additional.smt.options">produce-unsat-cores=true</option>
+    <option name="--traceabstraction.additional.smt.options">enumeration-timeout=5000</option>
+    <option name="--traceabstraction.additional.smt.options">interpolation-heuristic=SMALLESTAMONGWIDE</option>
+    <option name="--traceabstraction.additional.smt.options">tolerance=0.2</option>
+    <option name="--traceabstraction.additional.smt.options">log-additional-information=true</option>
+	<option name="--traceabstraction.additional.smt.options">unknown-allowed=true</option>
+  </rundefinition>
+</benchmark>
